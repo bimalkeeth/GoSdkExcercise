@@ -1,0 +1,5 @@
+[cognito]
+userPoolID="ap-southeast-2_079qZU0R3"
+clientID="14q0klndno3ikvma9ibctm3igq"
+jwksURI="https://cognito-idp.southeast-2.amazonaws.com/ap-southeast-2_079qZU0R3/.well-known/jwks.json"
+
