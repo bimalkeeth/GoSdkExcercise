@@ -1,11 +1,14 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/lestrrat/go-jwx/jwk"
 	"github.com/spf13/viper"
 )
@@ -123,6 +126,33 @@ func (c *Cognito) SignUp(username string, password string, email string, fullNam
 	log.Info("AccessToken: ", accessToken)
 
 	return accessToken, nil
+}
+func (c *Cognito) ValidateToken(jwtToken string) (string, error) {
+	log.Info("ValidationToken", jwtToken)
+	token, err := jwt.Parse(jwtToken, c.getKey)
+	if err != nil {
+		return "", fmt.Errorf("could not pass jwt: %v", err)
+	}
+	log.Debug("JWT Signature: ", token.Signature)
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		if claims["tken_use"] != "access" {
+			return "", fmt.Errorf("token_use mismatch: %s", claims["token_use"])
+		}
+		return claims["sub"].(string), nil
+	}
+	return "", nil
+}
+
+func (c *Cognito) getKey(token *jwt.Token) (interface{}, error) {
+	keyID, ok := token.Header["kid"].(string)
+	if !ok {
+		return nil, errors.New("expecting JWT header to have string kid")
+	}
+	log.Debug("kid: ", keyID)
+	if key := keySet.LookupKeyID(keyID); len(key) == 1 {
+		return key[0].Materialize()
+	}
+	return nil, errors.New("unable to find key")
 }
 
 func main() {
