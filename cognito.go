@@ -157,5 +157,14 @@ func (c *Cognito) getKey(token *jwt.Token) (interface{}, error) {
 
 func main() {
 
-	NewCognito()
+	cog := NewCognito()
+	jwts, err := cog.SignUp("kk", "kk@1234", "kk@gmail.com", "kk kk")
+	if err != nil {
+		log.Debug("Error in operation %v", err)
+	}
+	sub, err := cog.ValidateToken(jwts)
+	if err != nil {
+		log.Debug("Error in operation %v", err)
+	}
+	log.Info(sub)
 }
